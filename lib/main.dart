@@ -1,68 +1,115 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'fruit_sudoku_garden.dart';
-import 'dart:math';
 
-void main() { runApp(const PuzzleGardenApp()); }
-
+void main() => runApp(const PuzzleGardenApp());
 class PuzzleGardenApp extends StatelessWidget {
   const PuzzleGardenApp({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData(scaffoldBackgroundColor: const Color(0xFFFFFBF0)), home: const HomeScreen());
+  @override Widget build(BuildContext context) {
+    return MaterialApp(title: 'Puzzle Garden', theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.green), home: const HomeScreen(), debugShowCheckedModeBanner: false);
   }
 }
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
+  @override Widget build(BuildContext context) {
+    final gardens = [
+      {'emoji':'🌷','title':'Flower Garden','sub':'Takuzu • 21 levels','color':Colors.pink,'page':const FlowerPage()},
+      {'emoji':'🌸','title':'Sakura Garden','sub':'Memory • 15 levels','color':Colors.purple,'page':const SakuraPage()},
+      {'emoji':'🍃','title':'Zen Rake Garden','sub':'Path • 20 levels','color':Colors.teal,'page':const ZenPage()},
+      {'emoji':'🐟','title':'Koi Path Garden','sub':'Slide • 18 levels','color':Colors.blue,'page':const KoiPage()},
+      {'emoji':'🍓','title':'Fruit Sudoku Garden','sub':'Sudoku • 15 levels • HOT','color':Colors.orange,'page':const FruitSudokuGarden()},
+    ];
+    return Scaffold(appBar: AppBar(title: const Text('Puzzle Garden'), centerTitle: true), body: Column(children: [
+      Container(width: double.infinity, margin: const EdgeInsets.all(12), padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: Colors.green[50], borderRadius: BorderRadius.circular(16)), child: const Column(children: [Text('🌿 Puzzle Garden', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)), SizedBox(height: 4), Text('Relax. Think. Grow.', style: TextStyle(fontSize: 14)), SizedBox(height: 8), Text('5 in 1 • 89 Puzzles • 5 Gardens', style: TextStyle(fontWeight: FontWeight.w600))])),
+      Expanded(child: ListView.builder(padding: const EdgeInsets.symmetric(horizontal: 12), itemCount: gardens.length, itemBuilder: (_, i){
+        final g = gardens[i];
+        return Card(color: (g['color'] as Color).withOpacity(0.12), child: ListTile(leading: Text(g['emoji'] as String, style: const TextStyle(fontSize: 32)), title: Text(g['title'] as String, style: const TextStyle(fontWeight: FontWeight.bold)), subtitle: Text(g['sub'] as String), trailing: const Icon(Icons.arrow_forward_ios, size: 16), onTap: ()=>Navigator.push(context, MaterialPageRoute(builder: (_)=>g['page'] as Widget))));
+      })),
+    ]));
+  }
+}
+
+void showHow(BuildContext ctx, String title, String body){
+  showDialog(context: ctx, builder: (_)=>AlertDialog(title: Text(title), content: Text(body), actions: [TextButton(onPressed: ()=>Navigator.pop(ctx), child: const Text('Got it'))]));
+}
+
+// FLOWER
+class FlowerPage extends StatefulWidget { const FlowerPage({super.key}); @override State<FlowerPage> createState()=>_FlowerState(); }
+class _FlowerState extends State<FlowerPage> {
+  List<List<int>> b=[]; int level=1; String msg='Fill all tiles, then tap CHECK';
+  @override void initState(){ super.initState(); _new(); }
+  void _new(){ b=List.generate(6, (_)=>List.generate(6, (_)=>Random().nextInt(3)-1)); msg='Level $level / 21 - Fill all, then tap CHECK'; setState((){}); }
+  void _check(){
+    if(b.any((r)=>r.contains(-1))){ setState(()=>msg='⚠️ Still empty tiles - fill all first'); return; }
+    bool ok=true; String why='';
+    for(int r=0;r<6;r++){ if(b[r].where((v)=>v==0).length!=3){ ok=false; why='Row ${r+1} needs 3 🌷 and 3 🌿'; break; } for(int c=0;c<4;c++){ if(b[r][c]==b[r][c+1]&&b[r][c]==b[r][c+2]){ ok=false; why='Row ${r+1} has 3 same in a row'; break; } } if(!ok) break; }
+    if(!ok){ setState(()=>msg='❌ WRONG - $why'); return; }
+    setState(()=>msg='🎉 CORRECT! Level $level done!');
+    showDialog(context: context, builder: (_)=>AlertDialog(title: Text('🎉 Level $level Correct!'), content: const Text('Beautiful garden! Next level?'), actions: [TextButton(onPressed: (){ Navigator.pop(context); setState(()=>level=level<21?level+1:1); _new(); }, child: const Text('Next Level'))]));
+  }
+  @override Widget build(BuildContext context){ return Scaffold(appBar: AppBar(title: Text('🌷 Flower Garden - Level $level / 21'), actions: [IconButton(onPressed: ()=>showHow(context, '🌷 How to Play', 'Fill every tile with 🌷 or 🌿.\n1. Each row & column: 3 🌷 + 3 🌿\n2. No 3 same in a row\n3. No two rows identical\nTap tile: empty → 🌷 → 🌿 → empty'), icon: const Icon(Icons.help_outline))]), body: Column(children: [Padding(padding: const EdgeInsets.all(10), child: Text(msg, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w600))), Expanded(child: GridView.builder(padding: const EdgeInsets.all(12), gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 6, crossAxisSpacing: 4, mainAxisSpacing: 4), itemCount: 36, itemBuilder: (_, i){ int r=i~/6,c=i%6,v=b[r][c]; return GestureDetector(onTap: ()=>setState(()=>b[r][c]=(v+2)%3-1), child: Container(decoration: BoxDecoration(color: v==-1?Colors.white:v==0?Colors.pink[100]:Colors.green[200], borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.black26)), child: Center(child: Text(v==-1?'':v==0?'🌷':'🌿', style: const TextStyle(fontSize: 20))))); })), SafeArea(child: Container(color: Colors.white, padding: const EdgeInsets.fromLTRB(12, 12, 12, 20), child: Row(children: [Expanded(child: ElevatedButton(onPressed: _check, child: const Text('✓ CHECK - Am I Right?'))), const SizedBox(width: 8), ElevatedButton(onPressed: _new, child: const Text('New'))])))])); }
+}
+
+// SAKURA
+class SakuraPage extends StatefulWidget { const SakuraPage({super.key}); @override State<SakuraPage> createState()=>_SakuraState(); }
+class _SakuraState extends State<SakuraPage> {
+  List<String> cards=[]; List<bool> flipped=[]; List<bool> matched=[]; int? first;
+  @override void initState(){ super.initState(); _new(); }
+  void _new(){ var base=['🌸','🌷','🌹','🌻','🌼','🌺']; cards=[...base, ...base]..shuffle(); flipped=List.filled(12,false); matched=List.filled(12,false); first=null; setState((){}); }
+  bool _busy=false; void _tap(int i){ if(_busy) return; if(matched[i]){ ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Already matched - pick another card'))); return; } if(flipped[i]){ ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Already flipped - pick another'))); return; } setState(()=>flipped[i]=true); if(first==null){ first=i; } else { int f=first!; if(cards[f]==cards[i]){ setState(()=>matched[f]=matched[i]=true); } else { _busy=true; Future.delayed(const Duration(milliseconds: 700), ()=>setState(()=>{flipped[f]=false, flipped[i]=false, _busy=false})); } first=null; } }
+  @override Widget build(BuildContext context){ int done=matched.where((m)=>m).length~/2; return Scaffold(appBar: AppBar(title: const Text('🌸 Sakura - Level 1 / 15'), actions: [IconButton(onPressed: ()=>showHow(context, '🌸 How to Play', 'Tap 2 cards to flip. If they match, they stay. If not, they flip back. Goal: Match all 6 pairs.'), icon: const Icon(Icons.help_outline))]), body: Column(children: [Padding(padding: const EdgeInsets.all(10), child: Text('Found $done / 6 pairs', style: const TextStyle(fontWeight: FontWeight.w600))), Expanded(child: GridView.builder(padding: const EdgeInsets.all(12), gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, crossAxisSpacing: 6, mainAxisSpacing: 6), itemCount: 12, itemBuilder: (_, i)=>GestureDetector(onTap: ()=>_tap(i), child: Container(decoration: BoxDecoration(color: matched[i]?Colors.pink[100]:Colors.pink[50], borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.black26)), child: Center(child: Text(flipped[i]||matched[i]?cards[i]:'🌸', style: const TextStyle(fontSize: 26))))))), SafeArea(child: Container(color: Colors.white, padding: const EdgeInsets.fromLTRB(12, 12, 12, 20), child: Row(children: [Expanded(child: ElevatedButton(onPressed: ()=>ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(done==6?'🎉 CORRECT! All 6 pairs!':'You found $done / 6 pairs - keep going!'))), child: const Text('✓ CHECK'))), const SizedBox(width: 8), ElevatedButton(onPressed: _new, child: const Text('New'))])))])); }
+}
+
+// ZEN
+class ZenPage extends StatefulWidget { const ZenPage({super.key}); @override State<ZenPage> createState() => _ZenState(); }
+class _ZenState extends State<ZenPage> {
+  int s = 5;
+  Set<int> path = {0};
+  void _reset() { setState(() { path = {0}; }); }
+  void _tap(int i) {
+    int last = path.last;
+    bool adjacent = (i - last).abs() == 1 || (i - last).abs() == s;
+    if (!adjacent) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tap only the cell NEXT to you - up/down/left/right'))); return; } if (path.contains(i)) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Already raked - pick a new cell'))); return; } setState(() { path.add(i); });
+  }
   @override
   Widget build(BuildContext context) {
-    double bottomPad = MediaQuery.of(context).padding.bottom;
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFBF0),
-      body: SafeArea(
-        child: Column(children: [
-          Container(margin: const EdgeInsets.all(12), padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: const Color(0xFFE8F5E9).withOpacity(0.7), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.black12)), child: const Column(children: [Row(children: [Text('🌸', style: TextStyle(fontSize: 28)), SizedBox(width: 10), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Puzzle Garden', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)), Text('Relax. Think. Grow. • Zen puzzle collection', style: TextStyle(fontSize: 11, color: Colors.black54))])), Text('5 in 1', style: TextStyle(fontWeight: FontWeight.bold))]), SizedBox(height: 12), Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Column(children: [Text('🧩', style: TextStyle(fontSize: 20)), Text('89', style: TextStyle(fontWeight: FontWeight.bold)), Text('Puzzles', style: TextStyle(fontSize: 10))]), Column(children: [Text('🌷', style: TextStyle(fontSize: 20)), Text('5', style: TextStyle(fontWeight: FontWeight.bold)), Text('Gardens', style: TextStyle(fontSize: 10))]), Column(children: [Text('⭐', style: TextStyle(fontSize: 20)), Text('0', style: TextStyle(fontWeight: FontWeight.bold)), Text('Stars', style: TextStyle(fontSize: 10))]), Column(children: [Text('🍓', style: TextStyle(fontSize: 20)), Text('15', style: TextStyle(fontWeight: FontWeight.bold)), Text('Fruits', style: TextStyle(fontSize: 10))]), Column(children: [Text('⏱️', style: TextStyle(fontSize: 20)), Text('Best', style: TextStyle(fontWeight: FontWeight.bold)), Text('Time', style: TextStyle(fontSize: 10))])])])),
-          Expanded(child: GridView.count(crossAxisCount: 2, padding: EdgeInsets.fromLTRB(12, 0, 12, bottomPad + 90), mainAxisSpacing: 12, crossAxisSpacing: 12, childAspectRatio: 0.95, children: const [
-            GardenTile(id: 0, title: 'Flower Garden', emoji: '🌷', subtitle: 'Logic • Takuzu', color: Color(0xFFE8F5E9), levelText: '21 levels • POPULAR'),
-            GardenTile(id: 1, title: 'Sakura Garden', emoji: '🌸', subtitle: 'Memory Match', color: Color(0xFFFCE4EC), levelText: '15 levels • 3-5-7'),
-            GardenTile(id: 2, title: 'Zen Rake', emoji: '🍃', subtitle: 'One Stroke Path', color: Color(0xFFF1F8E9), levelText: '20 levels'),
-            GardenTile(id: 3, title: 'Koi Path', emoji: '🐟', subtitle: 'Sliding Puzzle', color: Color(0xFFE0F7FA), levelText: '18 levels'),
-            GardenTile(id: 4, title: 'Fruit Sudoku', emoji: '🍓', subtitle: '4x4 to 9x9', color: Color(0xFFFFF3E0), levelText: '15 levels • HOT', isHot: true),
-          ])),
-        ]),
+      appBar: AppBar(
+        title: Text('🍃 Zen Rake - ${path.length} / ${s * s}'),
+        actions: [IconButton(onPressed: () => showHow(context, '🍃 How to Play', 'Goal: Rake EVERY cell. Tap adjacent cell (up/down/left/right) to move. Cannot jump or revisit. Cover all, then tap CHECK.'), icon: const Icon(Icons.help_outline))],
+      ),
+      body: Column(
+        children: [
+          const Padding(padding: EdgeInsets.all(10), child: Text('Tap adjacent cell to rake it', style: TextStyle(fontWeight: FontWeight.w600))),
+          Expanded(
+            child: GridView.builder(
+              padding: const EdgeInsets.all(12),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: s, crossAxisSpacing: 4, mainAxisSpacing: 4),
+              itemCount: s * s,
+              itemBuilder: (_, i) => GestureDetector(
+                onTap: () => _tap(i),
+                child: Container(
+                  decoration: BoxDecoration(color: path.contains(i) ? Colors.teal[200] : Colors.brown[100], borderRadius: BorderRadius.circular(8)),
+                  child: Center(child: Text(path.contains(i) ? '〰️' : '')),
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(children: [
+              Expanded(child: ElevatedButton(onPressed: () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(path.length == s * s ? '🎉 CORRECT! Fully raked!' : '❌ Not yet - ${path.length} / ${s * s}. Keep going!'))), child: const Text('✓ CHECK'))),
+              const SizedBox(width: 8),
+              ElevatedButton(onPressed: _reset, child: const Text('Reset')),
+            ]),
+          ),
+        ],
       ),
     );
   }
 }
+// KOI
 
-class GardenTile extends StatelessWidget {
-  final int id; final String title; final String emoji; final String subtitle; final Color color; final String levelText; final bool isHot;
-  const GardenTile({super.key, required this.id, required this.title, required this.emoji, required this.subtitle, required this.color, required this.levelText, this.isHot=false});
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Widget page = id==0 ? const FlowerPage() : id==1 ? const SakuraPage() : id==2 ? const ZenRakeRealPage() : id==3 ? const KoiRealPage() : const FruitSudokuGarden();
-        Navigator.push(context, MaterialPageRoute(builder: (_) => page));
-      },
-      child: Container(decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(16), border: Border.all(color: isHot ? const Color(0xFFFFD54F) : Colors.black12, width: isHot ? 2 : 1)), padding: const EdgeInsets.all(12), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(emoji, style: const TextStyle(fontSize: 28)), if (isHot) Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), decoration: BoxDecoration(color: const Color(0xFFFFEB3B), borderRadius: BorderRadius.circular(10)), child: const Text('HOT', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold)))]),
-        const SizedBox(height: 8), Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)), Text(subtitle, style: const TextStyle(fontSize: 11, color: Colors.black54)), const Spacer(), Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.black12)), child: Text(levelText, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600))),
-      ])),
-    );
-  }
-}
-
-// REAL GAMES - Not placeholders
-
-class FlowerPage extends StatefulWidget { const FlowerPage({super.key}); @override State<FlowerPage> createState() => _FlowerPageState(); }
-class _FlowerPageState extends State<FlowerPage> { List<List<int>> b=[]; @override void initState(){ super.initState(); _new(); } void _new(){ b=List.generate(6, (_)=>List.generate(6, (_)=>Random().nextInt(3)-1)); setState((){});} @override Widget build(BuildContext context){ return Scaffold(appBar: AppBar(title: const Text('🌷 Flower Garden - Real Takuzu')), body: Column(children: [const Padding(padding: EdgeInsets.all(8), child: Text('Tap: empty → 🌷 → 🌿 → empty', style: TextStyle(fontSize: 12))), Expanded(child: GridView.builder(padding: const EdgeInsets.all(12), gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 6, crossAxisSpacing: 4, mainAxisSpacing: 4), itemCount: 36, itemBuilder: (_, i){ int r=i~/6,c=i%6,v=b[r][c]; return GestureDetector(onTap: (){ setState(()=>b[r][c]=(v+2)%3-1); }, child: Container(decoration: BoxDecoration(color: v==-1?Colors.white:v==0?Colors.pink[100]:Colors.green[200], borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.black26)), child: Center(child: Text(v==-1?'':v==0?'🌷':'🌿', style: const TextStyle(fontSize: 20))))); })), Padding(padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom+20), child: ElevatedButton(onPressed: _new, child: const Text('New Garden')))])); } }
-
-class SakuraPage extends StatefulWidget { const SakuraPage({super.key}); @override State<SakuraPage> createState() => _SakuraPageState(); }
-class _SakuraPageState extends State<SakuraPage> { List<String> cards=[]; List<bool> rev=[], matched=[]; int? first; @override void initState(){ super.initState(); _new(); } void _new(){ List<String> e=['🌸','🌷','🌹','🌻','🍀','🌼']; cards=[...e,...e]; cards.shuffle(); rev=List.filled(12,false); matched=List.filled(12,false); first=null; setState((){});} void _tap(int i){ if (rev[i]||matched[i]) return; setState(()=>rev[i]=true); if (first==null){ first=i; } else { if (cards[first!]==cards[i]){ setState(()=>matched[first!]=matched[i]=true); first=null; if (matched.every((m)=>m)) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('🌸 All Matched!'))); } else { Future.delayed(const Duration(milliseconds: 600), ()=>setState(()=>rev[first!]=rev[i]=false,)); first=null; } } } @override Widget build(BuildContext context){ return Scaffold(appBar: AppBar(title: const Text('🌸 Sakura Garden - Real Memory')), body: Column(children: [Expanded(child: GridView.builder(padding: const EdgeInsets.all(16), gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, crossAxisSpacing: 10, mainAxisSpacing: 10), itemCount: 12, itemBuilder: (_, i){ bool show=rev[i]||matched[i]; return GestureDetector(onTap: ()=>_tap(i), child: Container(decoration: BoxDecoration(color: matched[i]?Colors.green[100]:show?const Color(0xFFFCE4EC):Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.black12)), child: Center(child: Text(show?cards[i]:'?', style: const TextStyle(fontSize: 26))))); })), Padding(padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom+20), child: ElevatedButton(onPressed: _new, child: const Text('New Game')))])); } }
-
-class ZenRakeRealPage extends StatefulWidget { const ZenRakeRealPage({super.key}); @override State<ZenRakeRealPage> createState() => _ZenRakeRealPageState(); }
-class _ZenRakeRealPageState extends State<ZenRakeRealPage> { int s=5; Set<Point<int>> path={}; Point<int>? last; @override void initState(){ super.initState(); _reset(); } void _reset(){ path={const Point(0,0)}; last=const Point(0,0); setState((){});} @override Widget build(BuildContext context){ return Scaffold(appBar: AppBar(title: Text('🍃 Zen Rake - ${path.length}/${s*s}')), body: Column(children: [const Padding(padding: EdgeInsets.all(8), child: Text('Tap adjacent cell to rake - cover all', style: TextStyle(fontSize: 12))), Expanded(child: GridView.builder(padding: const EdgeInsets.all(16), gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: s, crossAxisSpacing: 6, mainAxisSpacing: 6), itemCount: s*s, itemBuilder: (_, i){ int r=i~/s,c=i%s; bool inP=path.contains(Point(r,c)); return GestureDetector(onTap: (){ Point<int> p=Point(r,c); if ((p.x-last!.x).abs()+(p.y-last!.y).abs()==1 && !path.contains(p)){ setState(()=>path.add(p)); last=p; if (path.length==s*s) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('🍃 Zen Fully Raked!'))); } }, child: Container(decoration: BoxDecoration(color: inP?const Color(0xFFA5D6A7):const Color(0xFFF1F8E9), borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.black12)), child: Center(child: Text(inP?'🍃':'', style: const TextStyle(fontSize: 20))))); })), Padding(padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom+20), child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [ElevatedButton(onPressed: _reset, child: const Text('Reset')), ElevatedButton(onPressed: (){ setState(()=>s=s==5?6:5); _reset(); }, child: Text('Size $s'))]))])); } }
-
-class KoiRealPage extends StatefulWidget { const KoiRealPage({super.key}); @override State<KoiRealPage> createState() => _KoiRealPageState(); }
-class _KoiRealPageState extends State<KoiRealPage> { List<int> t=[]; int m=0; @override void initState(){ super.initState(); _shuffle(); } void _shuffle(){ t=List.generate(15, (i)=>i+1)..add(0); t.shuffle(); m=0; setState((){});} void _move(int i){ int z=t.indexOf(0); if ((z~/4-i~/4).abs()+(z%4-i%4).abs()==1){ setState(()=>{t[z]=t[i], t[i]=0, m++}); } } @override Widget build(BuildContext context){ return Scaffold(appBar: AppBar(title: Text('🐟 Koi Path - Moves $m')), body: Column(children: [Expanded(child: GridView.builder(padding: const EdgeInsets.all(16), gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, crossAxisSpacing: 8, mainAxisSpacing: 8), itemCount: 16, itemBuilder: (_, i){ bool empty=t.isEmpty||t[i]==0; return GestureDetector(onTap: empty?null:()=>_move(i), child: Container(decoration: BoxDecoration(color: empty?Colors.transparent:const Color(0xFFE0F7FA), borderRadius: BorderRadius.circular(12), border: Border.all(color: empty?Colors.transparent:Colors.black12)), child: Center(child: Text(empty?'':'${t[i]}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold))))); })), Padding(padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom+20), child: ElevatedButton(onPressed: _shuffle, child: const Text('Shuffle')))])); } }
+class KoiPage extends StatefulWidget { const KoiPage({super.key}); @override State<KoiPage> createState()=>_KoiState(); }
+class _KoiState extends State<KoiPage> { List<int> t=[]; int m=0; @override void initState(){ super.initState(); _shuffle(); } void _shuffle(){ t=List.generate(16,(i)=>i); t.shuffle(); m=0; setState((){}); } void _tap(int i){ int e=t.indexOf(15); if((i-e).abs()==1&&(i~/4==e~/4)||(i-e).abs()==4){ setState(()=>{t[e]=t[i], t[i]=15, m++}); } } @override Widget build(BuildContext context){ return Scaffold(appBar: AppBar(title: Text('🐟 Koi Path - Moves $m'), actions: [IconButton(onPressed: ()=>showHow(context, '🐟 How to Play', 'Goal: Slide tiles to 1-15 in order. Tap tile next to empty space to slide. Tap CHECK to see if correct.'), icon: const Icon(Icons.help_outline))]), body: Column(children: [Expanded(child: GridView.builder(padding: const EdgeInsets.all(12), gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, crossAxisSpacing: 4, mainAxisSpacing: 4), itemCount: 16, itemBuilder: (_, i)=>GestureDetector(onTap: ()=>_tap(i), child: Container(decoration: BoxDecoration(color: t[i]==15?Colors.white:Colors.blue[100], borderRadius: BorderRadius.circular(8)), child: Center(child: Text(t[i]==15?'': '${t[i]+1}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold))))))), SafeArea(child: Container(color: Colors.white, padding: const EdgeInsets.fromLTRB(12, 12, 12, 20), child: Row(children: [Expanded(child: ElevatedButton(onPressed: (){ bool ok=true; for(int i=0;i<15;i++) if(t[i]!=i) ok=false; ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ok?'🎉 CORRECT! Koi path complete!':'❌ WRONG - not in order yet'))); }, child: const Text('✓ CHECK'))), const SizedBox(width: 8), ElevatedButton(onPressed: _shuffle, child: const Text('Shuffle'))])))])); } }
