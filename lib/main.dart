@@ -96,13 +96,16 @@ class _ZenState extends State<ZenPage> {
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(children: [
+          SafeArea(
+            child: Container(
+              color: Colors.white,
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 20),
+              child: Row(children: [
               Expanded(child: ElevatedButton(onPressed: () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(path.length == s * s ? '🎉 CORRECT! Fully raked!' : '❌ Not yet - ${path.length} / ${s * s}. Keep going!'))), child: const Text('✓ CHECK'))),
               const SizedBox(width: 8),
               ElevatedButton(onPressed: _reset, child: const Text('Reset')),
             ]),
+            ),
           ),
         ],
       ),
