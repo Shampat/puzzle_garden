@@ -54,7 +54,7 @@ class _FruitState extends State<FruitSudokuGarden> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('🍓 Fruit Sudoku - Level 1 / 15'),
+        title: const Text('🍓 Sudoku 1/15'),
         actions: [IconButton(onPressed: _how, icon: const Icon(Icons.help_outline))],
       ),
       body: Column(
@@ -79,8 +79,8 @@ class _FruitState extends State<FruitSudokuGarden> {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            child: Wrap(
+              alignment: WrapAlignment.center,
               children: List.generate(4, (i) => Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: ChoiceChip(label: Text(fruits[i], style: const TextStyle(fontSize: 22)), selected: selected == i, onSelected: (_) => setState(() => selected = i)),

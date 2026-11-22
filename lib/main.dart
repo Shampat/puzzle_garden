@@ -114,5 +114,141 @@ class _ZenState extends State<ZenPage> {
 }
 // KOI
 
-class KoiPage extends StatefulWidget { const KoiPage({super.key}); @override State<KoiPage> createState()=>_KoiState(); }
-class _KoiState extends State<KoiPage> { List<int> t=[]; int m=0; @override void initState(){ super.initState(); _shuffle(); } void _shuffle(){ t=List.generate(16,(i)=>i); t.shuffle(); m=0; setState((){}); } void _tap(int i){ int e=t.indexOf(15); if((i-e).abs()==1&&(i~/4==e~/4)||(i-e).abs()==4){ setState(()=>{t[e]=t[i], t[i]=15, m++}); } } @override Widget build(BuildContext context){ return Scaffold(appBar: AppBar(title: Text('🐟 Koi Path - Moves $m'), actions: [IconButton(onPressed: ()=>showHow(context, '🐟 How to Play', 'Goal: Slide tiles to 1-15 in order. Tap tile next to empty space to slide. Tap CHECK to see if correct.'), icon: const Icon(Icons.help_outline))]), body: Column(children: [Expanded(child: GridView.builder(padding: const EdgeInsets.all(12), gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, crossAxisSpacing: 4, mainAxisSpacing: 4), itemCount: 16, itemBuilder: (_, i)=>GestureDetector(onTap: ()=>_tap(i), child: Container(decoration: BoxDecoration(color: t[i]==15?Colors.white:Colors.blue[100], borderRadius: BorderRadius.circular(8)), child: Center(child: Text(t[i]==15?'': '${t[i]+1}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold))))))), SafeArea(child: Container(color: Colors.white, padding: const EdgeInsets.fromLTRB(12, 12, 12, 20), child: Row(children: [Expanded(child: ElevatedButton(onPressed: (){ bool ok=true; for(int i=0;i<15;i++) if(t[i]!=i) ok=false; ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ok?'🎉 CORRECT! Koi path complete!':'❌ WRONG - not in order yet'))); }, child: const Text('✓ CHECK'))), const SizedBox(width: 8), ElevatedButton(onPressed: _shuffle, child: const Text('Shuffle'))])))])); } }
+class KoiPage extends StatefulWidget {
+  const KoiPage({super.key});
+
+  @override
+  State<KoiPage> createState() => _KoiState();
+}
+
+class _KoiState extends State<KoiPage> {
+  List<int> t = [];
+  int m = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _shuffle();
+  }
+
+  void _shuffle() {
+    t = List.generate(16, (i) => i);
+    t.shuffle();
+    m = 0;
+    setState(() {});
+  }
+
+  void _tap(int i) {
+    int e = t.indexOf(15);
+    if ((i - e).abs() == 1 && (i ~/ 4 == e ~/ 4) ||
+        (i - e).abs() == 4) {
+      setState(() {
+        t[e] = t[i];
+        t[i] = 15;
+        m++;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('🐟 Koi Path - Moves $m'),
+        actions: [
+          IconButton(
+            onPressed: () => showHow(
+              context,
+              '🐟 How to Play',
+              'Goal: Slide tiles to 1-15 in order. Tap tile next to empty space to slide. Tap CHECK to see if correct.',
+            ),
+            icon: const Icon(Icons.help_outline),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final boardSize = constraints.maxWidth < constraints.maxHeight
+                    ? constraints.maxWidth
+                    : constraints.maxHeight;
+
+                return Center(
+                  child: SizedBox(
+                    width: boardSize,
+                    height: boardSize,
+                    child: GridView.builder(
+                      padding: const EdgeInsets.all(12),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 4,
+                        crossAxisSpacing: 4,
+                        mainAxisSpacing: 4,
+                      ),
+                      itemCount: 16,
+                      itemBuilder: (_, i) => GestureDetector(
+                        onTap: () => _tap(i),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: t[i] == 15 ? Colors.white : Colors.blue[100],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Center(
+                            child: Text(
+                              t[i] == 15 ? '' : '${t[i] + 1}',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          SafeArea(
+            child: Container(
+              color: Colors.white,
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 20),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        bool ok = true;
+                        for (int i = 0; i < 15; i++) {
+                          if (t[i] != i) ok = false;
+                        }
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              ok
+                                  ? '🎉 CORRECT! Koi path complete!'
+                                  : '❌ WRONG - not in order yet',
+                            ),
+                          ),
+                        );
+                      },
+                      child: const Text('✓ CHECK'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: _shuffle,
+                    child: const Text('Shuffle'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
