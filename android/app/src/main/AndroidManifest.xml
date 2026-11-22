@@ -7,7 +7,7 @@
     <application
         android:label="Puzzle Garden"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/launcher_icon"
         android:theme="@style/LaunchTheme">
         
         <!-- AdMob App ID - TEST ID for now, replace with real before production -->
